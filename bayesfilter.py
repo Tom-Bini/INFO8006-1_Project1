@@ -31,6 +31,25 @@ class BeliefStateAgent(Agent):
             of T_t is the probability P(X_t = (k, l) | X_{t-1} = (i, j)) for
             the ghost to move from (i, j) to (k, l).
         """
+        W = walls.width()
+        H = walls.height()
+        T_t = np.zeros((W, H, W, H))
+        fear = self.ghost.fear #Est-ce que on a la valeur de fear ou pas ?
+        #Regarder pour toute les position (i,j) du fantome les 4 possibilité de mouvement et leur probabilité
+        #qui vient du fichier ghostAgent dans getDistribution()
+        for i in range(W):
+            for j in range(H):
+                if(walls[i][j]): continue
+                distance = manhattanDistance((i, j), position)
+                directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+                sum = 0
+                for di, dj in directions:
+                    ni, nj = i + di, j + dj
+                    if 0 <= ni < W and 0 <= nj < H and not walls[ni][nj]:
+                        succ_distance = manhattanDistance((ni, nj), position)
+                        T_t[i][j][ni][nj] = 2**fear if succ_distance >= distance else 1
+                        sum += T_t[i][j][ni][nj]
+                T_t[i][j] /= sum # normalize
 
         pass
 
