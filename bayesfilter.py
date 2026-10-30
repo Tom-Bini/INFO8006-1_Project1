@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import binom
 
 from pacman_module.game import Agent, Directions, manhattanDistance
 
@@ -31,8 +32,7 @@ class BeliefStateAgent(Agent):
             of T_t is the probability P(X_t = (k, l) | X_{t-1} = (i, j)) for
             the ghost to move from (i, j) to (k, l).
         """
-        W = walls.width()
-        H = walls.height()
+        W, H = walls.width, walls.height
         T_t = np.zeros((W, H, W, H))
         fear = self.ghost.fear #Est-ce que on a la valeur de fear ou pas ?
         #Regarder pour toute les position (i,j) du fantome les 4 possibilité de mouvement et leur probabilité
@@ -69,6 +69,24 @@ class BeliefStateAgent(Agent):
         Returns:
             The W x H observation matrix O_t.
         """
+        n, p = 4, 0.5
+        W, H = walls.width, walls.height
+        O = np.zeros((W, H))
+
+        #Proba que le fantome soit en i, j
+        #l'énoncé dit e = d + z - n*p avec d la manhattan distance et z ~ Bin(n, p)
+        #P(e_t | X_t = (i,j)) = P(e_t = d + z - n*p | X_t = (i,j))
+        #                     = P(z = e_t - d + n*p | X_t = (i,j))
+        #                     = la PMF d'une binomiale avec la manhattan distance entre 
+        #                       la position de pacman donné et la position du fantome (i,j)
+
+        for i in range(W):
+            for j in range(H):
+                if(walls[i][j]):
+                    continue
+                d = manhattanDistance((i, j), position)
+                z = evidence - d + n*p
+                O[i, j] = binom.pmf(z, n, p)
 
         pass
 
