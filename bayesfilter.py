@@ -51,7 +51,7 @@ class BeliefStateAgent(Agent):
                         sum += T_t[i][j][ni][nj]
                 T_t[i][j] /= sum # normalize
 
-        pass
+        return T_t
 
     def observation_matrix(self, walls, evidence, position):
         """Builds the observation matrix
@@ -86,9 +86,9 @@ class BeliefStateAgent(Agent):
                     continue
                 d = manhattanDistance((i, j), position)
                 z = evidence - d + n*p
-                O[i, j] = binom.pmf(z, n, p)
+                O[i, j] = binom.pmf(z, n, p) #scipy.stat esperons on peut
 
-        pass
+        return O
 
     def update(self, walls, belief, evidence, position):
         """Updates the previous ghost belief state
@@ -110,8 +110,15 @@ class BeliefStateAgent(Agent):
 
         T = self.transition_matrix(walls, position)
         O = self.observation_matrix(walls, evidence, position)
+        W, H = walls.width, walls.height
 
-        pass
+        #attention au dimension et au faite que O est sensé etre diagonal donc a continé 
+        pred = np.tensordot(belief, T, axes=([0, 1], [0, 1]))   # (W, H)
+        f = O * pred
+        Z = f.sum()
+        if Z == 0:
+            return pred
+        return f / Z
 
     def get_action(self, state):
         """Updates the previous belief states given the current state.
